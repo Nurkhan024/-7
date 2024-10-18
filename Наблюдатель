@@ -1,0 +1,114 @@
+using System;
+using System.Collections.Generic;
+
+public interface IObserver
+{
+    void Update(string stockSymbol, decimal newPrice);
+}
+
+public interface ISubject
+{
+    void Attach(IObserver observer);
+    void Detach(IObserver observer);
+    void Notify(string stockSymbol, decimal newPrice);
+}
+
+public class StockExchange : ISubject
+{
+    private Dictionary<string, List<IObserver>> _observers = new Dictionary<string, List<IObserver>>();
+
+    public void Attach(IObserver observer)
+    {
+        foreach (var stockSymbol in _observers.Keys)
+        {
+            _observers[stockSymbol].Add(observer);
+        }
+    }
+
+    public void Detach(IObserver observer)
+    {
+        foreach (var stockSymbol in _observers.Keys)
+        {
+            if (_observers[stockSymbol].Contains(observer))
+            {
+                _observers[stockSymbol].Remove(observer);
+            }
+        }
+    }
+
+    public void Notify(string stockSymbol, decimal newPrice)
+    {
+        if (_observers.ContainsKey(stockSymbol))
+        {
+            foreach (var observer in _observers[stockSymbol])
+            {
+                observer.Update(stockSymbol, newPrice);
+            }
+        }
+    }
+
+    public void UpdateStockPrice(string stockSymbol, decimal newPrice)
+    {
+        Notify(stockSymbol, newPrice);
+    }
+
+    public void AddStock(string stockSymbol)
+    {
+        if (!_observers.ContainsKey(stockSymbol))
+        {
+            _observers[stockSymbol] = new List<IObserver>();
+        }
+    }
+}
+
+public class Trader : IObserver
+{
+    public void Update(string stockSymbol, decimal newPrice)
+    {
+        Console.WriteLine($"Trader notified: {stockSymbol} new price: {newPrice}");
+    }
+}
+
+public class TradingRobot : IObserver
+{
+    private decimal _threshold;
+
+    public TradingRobot(decimal threshold)
+    {
+        _threshold = threshold;
+    }
+
+    public void Update(string stockSymbol, decimal newPrice)
+    {
+        if (newPrice > _threshold)
+        {
+            Console.WriteLine($"Trading Robot: Buying {stockSymbol} at price {newPrice}");
+        }
+        else
+        {
+            Console.WriteLine($"Trading Robot: Selling {stockSymbol} at price {newPrice}");
+        }
+    }
+}
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        StockExchange stockExchange = new StockExchange();
+
+        stockExchange.AddStock("AAPL");
+        stockExchange.AddStock("GOOGL");
+
+        Trader trader = new Trader();
+        TradingRobot robot = new TradingRobot(100);
+
+        stockExchange.Attach(trader);
+        stockExchange.Attach(robot);
+
+        stockExchange.UpdateStockPrice("AAPL", 150);
+        stockExchange.UpdateStockPrice("GOOGL", 80);
+        stockExchange.UpdateStockPrice("AAPL", 200);
+        stockExchange.UpdateStockPrice("GOOGL", 60);
+    }
+}
