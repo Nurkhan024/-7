@@ -1,0 +1,92 @@
+using System;
+using System.Collections.Generic;
+public interface ICostCalculationStrategy
+{
+    decimal CalculateCost(decimal distance, int passengerCount, string serviceClass, bool isChildDiscount, bool isSeniorDiscount);
+}
+public class AirplaneCostCalculation : ICostCalculationStrategy
+{
+    public decimal CalculateCost(decimal distance, int passengerCount, string serviceClass, bool isChildDiscount, bool isSeniorDiscount)
+    {
+        decimal baseCost = distance * 21.538m;
+        if (serviceClass == "business")
+            baseCost *= 1.5m;
+
+        // Применение скидок
+        if (isChildDiscount)
+            baseCost *= 0.8m; // скидка для детей 20%
+        if (isSeniorDiscount)
+            baseCost *= 0.85m; // скидка для пенсионеров 15%
+
+        return baseCost * passengerCount;
+    }
+}
+public class TrainCostCalculation : ICostCalculationStrategy
+{
+    public decimal CalculateCost(decimal distance, int passengerCount, string serviceClass, bool isChildDiscount, bool isSeniorDiscount)
+    {
+        decimal baseCost = distance * 12.308m;
+        if (serviceClass == "business")
+            baseCost *= 1.2m;
+
+        // Применение скидок
+        if (isChildDiscount)
+            baseCost *= 0.9m; // скидка для детей 10%
+        if (isSeniorDiscount)
+            baseCost *= 0.85m; // скидка для пенсионеров 15%
+
+        return baseCost * passengerCount;
+    }
+}
+public class BusCostCalculation : ICostCalculationStrategy
+{
+    public decimal CalculateCost(decimal distance, int passengerCount, string serviceClass, bool isChildDiscount, bool isSeniorDiscount)
+    {
+        decimal baseCost = distance * 9.615m;
+        if (serviceClass == "business")
+            baseCost *= 1.1m;
+
+        if (isChildDiscount)
+            baseCost *= 0.85m; // скидка для детей 15%
+        if (isSeniorDiscount)
+            baseCost *= 0.9m; // скидка для пенсионеров 10%
+
+        return baseCost * passengerCount;
+    }
+}
+public class TravelBookingContext
+{
+    private ICostCalculationStrategy _strategy;
+
+    public void SetStrategy(ICostCalculationStrategy strategy)
+    {
+        _strategy = strategy;
+    }
+
+    public decimal CalculateCost(decimal distance, int passengerCount, string serviceClass, bool isChildDiscount, bool isSeniorDiscount)
+    {
+        return _strategy.CalculateCost(distance, passengerCount, serviceClass, isChildDiscount, isSeniorDiscount);
+    }
+}
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        TravelBookingContext bookingContext = new TravelBookingContext();
+
+        bookingContext.SetStrategy(new AirplaneCostCalculation());
+        decimal costAirplane = bookingContext.CalculateCost(2600, 1, "economy", false, false);
+        Console.WriteLine($"Стоимость поездки на самолете: {Math.Floor(costAirplane)} тг");
+
+        bookingContext.SetStrategy(new TrainCostCalculation());
+        decimal costTrain = bookingContext.CalculateCost(2600, 1, "economy", false, false);
+        Console.WriteLine($"Стоимость поездки на поезде: {Math.Floor(costTrain)} тг");
+
+        bookingContext.SetStrategy(new BusCostCalculation());
+        decimal costBus = bookingContext.CalculateCost(2600, 1, "economy", false, false);
+        Console.WriteLine($"Стоимость поездки на автобусе: {Math.Floor(costBus)} тг");
+
+        Console.ReadLine();
+    }
+}
